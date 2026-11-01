@@ -27,6 +27,7 @@ document.querySelector('#snapshot').textContent = BOOTSTRAP.publication.slice(0,
 const servers = buildServerMap(BOOTSTRAP);
 const godaddyHosts = new Set(BOOTSTRAP.godaddyHosts);
 const canaryResults = new Map(); // tld -> Promise<{ok, url, status}>, cleared on each run
+const earlierWitnesses = new WeakMap(); // row -> who may already have the name
 
 const STATE_TEXT = {
   waiting: 'Waiting',
@@ -180,6 +181,7 @@ async function check(name, row) {
   } else if (state === 'no-record') {
     setRow(row, state, 'This name may be free, but reserved and premium names look the same here. Your registrar has the final word.', seenBy, parties);
   } else {
+    earlierWitnesses.set(row, { names, parties });
     setRow(row, state, 'The registry gave no clear answer. Try again in a minute.', `Possibly seen by ${names}. ${registrarWarning}`.trim(), parties, true);
   }
 }
@@ -198,12 +200,16 @@ async function dnsLookup(row, label, name) {
 async function checkWithDns(name, row) {
   const offer = row.querySelector('.offer');
   const tld = tldOf(name);
+  // A second check must not hide who may have seen the name in the first one.
+  const earlier = earlierWitnesses.get(row);
+  const earlierText = earlier ? `Possibly seen by ${earlier.names}. ` : '';
+  const earlierParties = earlier?.parties ?? [];
   offer.hidden = true;
   setRow(row, 'checking');
   setEyes('watching');
 
   if (await dnsLookup(row, 'Test lookup', randomTestName(tld)) !== 'no-delegation') {
-    setRow(row, 'unknown', `The test lookup for .${tld} failed. Google DNS may be unreachable, or this ending may answer for every name.`, 'Your name was not sent to Google.');
+    setRow(row, 'unknown', `The test lookup for .${tld} failed. Google DNS may be unreachable, or this ending may answer for every name.`, `${earlierText}Your name was not sent to Google.`, earlierParties, true);
     offer.hidden = false;
     setEyes('closed');
     return;
@@ -212,14 +218,14 @@ async function checkWithDns(name, row) {
   await sleep(GAP_MS);
   const state = await dnsLookup(row, 'Your name', name);
   const witnesses = `Google Public DNS, then the .${tld} servers without your IP address.`;
-  const seenBy = `Seen by ${witnesses}`;
-  const parties = dnsParties(tld);
+  const seenBy = `${earlierText}Seen by ${witnesses}`;
+  const parties = [...earlierParties, ...dnsParties(tld)];
   if (state === 'registered') {
     setRow(row, state, 'This name has nameservers.', seenBy, parties);
   } else if (state === 'no-delegation') {
     setRow(row, state, 'This name may be free, but registered names without nameservers, and reserved names, look the same. Your registrar has the final word.', seenBy, parties);
   } else {
-    setRow(row, state, 'Google DNS gave no clear answer. Try again in a minute.', `Possibly seen by ${witnesses}`, parties, true);
+    setRow(row, state, 'Google DNS gave no clear answer. Try again in a minute.', `${earlierText}Possibly seen by ${witnesses}`, parties, true);
     offer.hidden = false;
   }
   setEyes('closed');

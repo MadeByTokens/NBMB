@@ -97,8 +97,9 @@ can confirm that a name can be bought, and at what price.
     node --test                        # logic tests
     python3 tools/update_bootstrap.py  # refresh data.js and the CSP
 
-Refresh the snapshot periodically. A stale list fails safe: a moved server shows
-Unknown. `update_bootstrap.py` finds GoDaddy hosts itself, but the other host notes in
+A GitHub Action refreshes the snapshot once a month and commits only if the tests
+pass and something changed. You can also run it from the Actions tab. A stale
+list fails safe: a moved server shows Unknown. `update_bootstrap.py` finds GoDaddy hosts itself, but the other host notes in
 `lib.js` were measured by hand, so re-check them after a refresh.
 
 ## Rules for contributors

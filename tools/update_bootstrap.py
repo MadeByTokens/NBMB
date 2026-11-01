@@ -14,6 +14,7 @@ import urllib.request
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 SOURCE = "https://data.iana.org/rdap/dns.json"
 HOST = re.compile(r"^[a-z0-9.-]+(:[0-9]+)?$")
+MIN_SERVICES = 400  # far fewer means a damaged list, which must not reach the page
 CSP_BLOCK = re.compile(r"<!-- csp:start -->.*?<!-- csp:end -->", re.S)
 OVERRIDE_HOSTS = {"rdap.identitydigital.services"}  # SERVER_OVERRIDES in lib.js
 
@@ -48,6 +49,9 @@ def main():
             raise SystemExit(f"refusing odd host: {host!r}")
         hosts.add(host)
         services.append([tlds, https[:1]])
+
+    if len(services) < MIN_SERVICES:
+        raise SystemExit(f"refusing a list with only {len(services)} services")
 
     hosts |= OVERRIDE_HOSTS
     hosts.add("dns.google")  # the opt-in DNS check; see lib.js

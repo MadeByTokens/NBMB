@@ -1,0 +1,36 @@
+name: Update registry list
+on:
+  schedule:
+    - cron: "17 4 3 * *" # once a month, off the hour to avoid the busiest times
+  workflow_dispatch:
+permissions:
+  contents: write
+  pages: write
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: python3 tools/update_bootstrap.py
+      - run: node --test
+      - name: Commit if anything changed
+        id: commit
+        run: |
+          if git diff --quiet; then
+            echo "Registry list unchanged."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -am "Update registry list"
+          git push
+          echo "changed=true" >> "$GITHUB_OUTPUT"
+      - name: Rebuild the site
+        if: steps.commit.outputs.changed == 'true'
+        run: gh api -X POST "repos/$GITHUB_REPOSITORY/pages/builds"
+        env:
+          GH_TOKEN: ${{ github.token }}
