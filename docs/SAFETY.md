@@ -1,0 +1,136 @@
+# Safety investigation
+
+Conducted 2026-11-01. Host and registry facts change, so re-check them before
+relying on them. This is an engineering review, not legal advice.
+
+## Summary
+
+The page is safe to run for personal use. The main risk to users is overtrust:
+believing a search is invisible, or that "No record found" means a name can be
+bought. No check found a way for names to reach anyone beyond the parties below,
+given an unmodified page and a browser without hostile extensions.
+
+## Who can see a lookup
+
+| Party | Sees | Notes |
+|---|---|---|
+| Registry | Name, IP address, site origin, time | Unavoidable. Google's terms say it may retain query details |
+| Cloudflare, for some registries | Same as the registry | Terminates TLS for 5 of 377 hosts, covering 509 of 1,203 listed TLDs |
+| Internet provider | Which registry host you contacted | Not the name. The host often reveals the TLD |
+| Site host | That the page loaded | Could see names only by serving altered code |
+| Browser extensions | Everything on the page | Use a private window with extensions off |
+| Registrars | Nothing, unless they share an owner with the registry | See below |
+
+Cloudflare-fronted hosts found by DNS: `rdap.identitydigital.services`,
+`rdap.publicinterestregistry.org`, `rdap.gmoregistry.net`, `rdap.cctld.au` and
+`rdap.nic.gov`. This covers `.org`, `.ai`, `.io` and `.me`. Detection used DNS
+names and known Cloudflare IP ranges, so it can miss other CDNs and hosts.
+
+## Registry and registrar ties
+
+Registries are not always separate from registrars:
+
+- Identity Digital (`.ai`, `.io`, `.me` and hundreds more) owns the registrar
+  Name.com.
+- GoDaddy runs both a registry and a large registrar. 204 listed hosts resolve
+  to its infrastructure, including `.tv`, `.biz` and `.club`. Results name it.
+- CentralNic (`.xyz` and others) belongs to Team Internet, which has registrar
+  businesses.
+
+ICANN's Registry Operator Code of Conduct limits some data sharing between a
+registry and its affiliated registrars, but we could not confirm that it covers
+lookup logs. We found no evidence that any of these companies misuses lookups.
+The page names these ties so that users can decide for themselves.
+
+## Front-running evidence
+
+ICANN's 2008 review of about 120 complaints found too little evidence to conclude
+that front-running happens at any appreciable scale, without ruling it out. The
+closest confirmed conduct was Network Solutions locking searched names for five
+days in 2008. We found no newer measurement. Treat the threat as plausible and
+unquantified.
+
+## Wrong results
+
+Tested with real names:
+
+| Case | Result |
+|---|---|
+| `co.uk`, `com.br`, `com.ai`, `com.fr` | Return 200, so they read as Registered |
+| `example.dev`, `test.dev`, `a.dev`, `www.dev` | Return 404, although names like these may be reserved |
+| `rdap.org` as a source | Returned 404 for `github.io`, `google.de`, `google.co` |
+
+A false "no record" costs little, because the registrar check shows the truth.
+That is why the label is "No record found", not "Available".
+
+## Registry terms
+
+We read the terms of Verisign, Public Interest Registry, Google Registry,
+Identity Digital, CentralNic and Nominet in full, and the short notice from
+Registro.br.
+
+- All except Registro.br's notice ban high-volume automated querying. Verisign,
+  Public Interest Registry and Identity Digital except what is reasonably
+  necessary to register domains.
+- A person checking a few names fits the query-based use these services describe.
+  This page stays within that: 20 names per run, one request at a time, nothing
+  stored.
+- CentralNic limits use to determining ownership, and bans storing data. It
+  threatens permanent blocking for abuse.
+- Nominet describes its service as a way to look up existing domains, and Google
+  describes its RDAP as an experimental pilot it can end at any time.
+- Public Interest Registry and Identity Digital say RDAP is not authoritative
+  and not a replacement for EPP.
+
+Risk to users: repeated use from one IP address can get that address throttled.
+This happened during testing: a sweep of all servers got one IP address blocked
+by GoDaddy for at least 25 minutes, across every GoDaddy TLD. During a block,
+results show Unknown, and the page does not expose the reason.
+Risk to anyone hosting a public copy: review these terms first, and keep the
+page free of bulk features. Do not republish lookup results.
+
+## Issues fixed in this review
+
+| Issue | Fix |
+|---|---|
+| Headline implied that no registrar could learn of a search | Reworded, and registrar ties are now named |
+| "Seen by" left out Cloudflare | Results name it where known |
+| "Not registered" overstated a 404 | Now "No record found", with a caveat |
+| A redirect could reach a server that had not passed the test lookup | Redirects now read as Unknown |
+| One failed test lookup blocked a TLD until reload | Test lookups rerun on each check |
+| A malformed registry date could freeze the page | Dates are validated, and each lookup is isolated |
+| "Seen by nobody" was untrue after a test lookup | Now "Your name was not sent" |
+| Browser translation could send names to a translation service | Translation is disabled for the page |
+| The update script could leave the CSP and data out of sync | It now fails if the CSP block is missing |
+| Page omitted the trademark, price and rate limit risks | "Before you buy" section added |
+
+## What was already sound
+
+- Registry data is rendered only with `textContent`.
+- The CSP allows only the page's own scripts and listed registry hosts.
+- Spellcheck and autocomplete are off, and the field has no form `name`.
+- Fetches send no cookies or referrer, and bypass the HTTP cache.
+- Names never appear in URLs, storage or history.
+
+## Remaining risks
+
+- A meta CSP cannot prevent framing. Hosts that can set headers should send
+  `Content-Security-Policy` with `frame-ancestors 'none'`.
+- A compromised host could serve altered code. Running locally avoids this.
+- The Cloudflare and registrar notes are hand-measured and can go stale.
+- Browser vendors' own telemetry and extensions are outside the page's control,
+  and were not audited.
+- The page has no licence yet, so others have no right to reuse it.
+
+## Sources
+
+- [ICANN SAC024](https://new.icann.org/committees/security/sac024.pdf)
+- [ICANN SAC022](https://www.icann.org/resources/pages/sac-022-2012-02-25-en)
+- [The Register on the 2008 investigation](https://www.theregister.com/2008/02/21/front_running_investigation)
+- [ICANN Registry Operator Code of Conduct](https://newgtldprogram.icann.org/en/node/1231)
+- [Verisign RDAP terms](https://www.verisign.com/domain-names/registration-data-access-protocol/terms-service/index.xhtml)
+- [Identity Digital RDDS policy](https://www.identity.digital/policies/rdds-access-policy)
+- [Identity Digital on Wikipedia](https://en.wikipedia.org/wiki/Identity_Digital)
+- [CentralNic Registry](https://centralnicregistry.com/about)
+- [CentralNic deals on Domain Incite](https://domainincite.com/?p=16893)
+- [Vertical integration on ICANNWiki](https://icannwiki.org/VI)

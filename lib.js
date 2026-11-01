@@ -24,16 +24,24 @@ const SECOND_LEVEL_SUFFIXES = new Set([
   'com.au', 'net.au', 'org.au',
 ]);
 
+// Measured 2026-11-01; see docs/SAFETY.md. `via` can read lookups because it
+// terminates TLS. `registrar` means the same owner also sells domains.
 const OPERATORS = {
-  'rdap.verisign.com': 'Verisign',
-  'tld-rdap.verisign.com': 'Verisign',
-  'rdap.identitydigital.services': 'Identity Digital',
-  'pubapi.registry.google': 'Google Registry',
-  'rdap.publicinterestregistry.org': 'Public Interest Registry',
-  'rdap.nominet.uk': 'Nominet',
-  'rdap.centralnic.com': 'CentralNic',
-  'rdap.registro.br': 'Registro.br',
+  'rdap.verisign.com': { name: 'Verisign' },
+  'tld-rdap.verisign.com': { name: 'Verisign' },
+  'rdap.identitydigital.services': { name: 'Identity Digital', via: 'Cloudflare', registrar: true },
+  'pubapi.registry.google': { name: 'Google Registry' },
+  'rdap.publicinterestregistry.org': { name: 'Public Interest Registry', via: 'Cloudflare' },
+  'rdap.gmoregistry.net': { name: 'GMO Registry', via: 'Cloudflare' },
+  'rdap.cctld.au': { name: 'the .au registry', via: 'Cloudflare' },
+  'rdap.nic.gov': { name: 'the .gov registry', via: 'Cloudflare' },
+  'rdap.nominet.uk': { name: 'Nominet' },
+  'rdap.centralnic.com': { name: 'CentralNic', registrar: true },
+  'rdap.centralnicregistry.com': { name: 'CentralNic', registrar: true },
+  'rdap.registro.br': { name: 'Registro.br' },
 };
+
+const GODADDY = { name: 'GoDaddy', registrar: true };
 
 const LABEL = /^(?!-)[a-z0-9-]{1,63}(?<!-)$/;
 
@@ -93,9 +101,12 @@ export function buildServerMap(bootstrap) {
 export const domainUrl = (server, name) => `${server}domain/${encodeURIComponent(name)}`;
 export const canaryFor = (tld) => CANARIES[tld] ?? `nic.${tld}`;
 
-export function operatorOf(serverUrl) {
+// Everyone known to see a lookup sent to this server, as a phrase for the page.
+export function witnessesOf(serverUrl, godaddyHosts = new Set()) {
   const host = new URL(serverUrl).hostname;
-  return OPERATORS[host] ?? host;
+  const operator = OPERATORS[host] ?? (godaddyHosts.has(host) ? GODADDY : { name: host });
+  const names = operator.via ? `${operator.name} and ${operator.via}` : operator.name;
+  return { names, registrarWarning: operator.registrar ? `${operator.name} also owns a registrar.` : '' };
 }
 
 // True only for a well-formed record of this exact domain.
@@ -105,17 +116,20 @@ export function isRecordOf(body, name) {
     && body.ldhName.toLowerCase().replace(/\.$/, '') === name;
 }
 
-// Decides what a response proves. Anything short of proof is "unknown",
-// so a broken or throttled server can never produce "not registered".
+// Decides what a response shows. A 404 means only "no record found": reserved
+// and premium names also return 404, so it never proves a name can be bought.
 export function classify({ status, body, name, serverTrusted }) {
   if (status === 200) {
     return isRecordOf(body, name) ? 'registered' : 'unknown';
   }
-  if (status === 404 && serverTrusted) return 'not-registered';
+  if (status === 404 && serverTrusted) return 'no-record';
   return 'unknown';
 }
 
+// Registry data is untrusted, so a malformed record yields null, not an exception.
 export function eventDate(body, action) {
-  const event = body?.events?.find((e) => e.eventAction === action);
-  return event?.eventDate?.slice(0, 10) ?? null;
+  if (!Array.isArray(body?.events)) return null;
+  const event = body.events.find((e) => e?.eventAction === action);
+  const date = event?.eventDate;
+  return typeof date === 'string' && /^\d{4}-\d{2}-\d{2}/.test(date) ? date.slice(0, 10) : null;
 }

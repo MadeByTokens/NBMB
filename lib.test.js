@@ -1,17 +1,17 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import {
-  buildServerMap, canaryFor, classify, domainUrl, normalizeName, operatorOf, parseNames,
+  buildServerMap, canaryFor, classify, domainUrl, eventDate, normalizeName, parseNames, witnessesOf,
 } from './lib.js';
 
 const record = (ldhName) => ({ objectClassName: 'domain', ldhName });
 
 test('a 404 proves nothing unless the server passed its canary', () => {
-  assert.equal(classify({ status: 404, name: 'a.com', serverTrusted: true }), 'not-registered');
+  assert.equal(classify({ status: 404, name: 'a.com', serverTrusted: true }), 'no-record');
   assert.equal(classify({ status: 404, name: 'a.com', serverTrusted: false }), 'unknown');
 });
 
-test('failures and throttling are never "not registered"', () => {
+test('failures and throttling never read as no record', () => {
   for (const status of [0, 301, 403, 429, 500]) {
     assert.equal(classify({ status, name: 'a.com', serverTrusted: true }), 'unknown');
   }
@@ -53,9 +53,28 @@ test('server map applies overrides and fixes trailing slashes', () => {
   assert.equal(domainUrl(map.get('com'), 'a.com'), 'https://x.test/v1/domain/a.com');
 });
 
-test('canaries and operator names', () => {
+test('canaries', () => {
   assert.equal(canaryFor('io'), 'github.io');
   assert.equal(canaryFor('dev'), 'nic.dev');
-  assert.equal(operatorOf('https://rdap.verisign.com/com/v1/'), 'Verisign');
-  assert.equal(operatorOf('https://rdap.other.test/'), 'rdap.other.test');
+});
+
+test('witnesses include network providers and registrar ties', () => {
+  assert.deepEqual(witnessesOf('https://rdap.verisign.com/com/v1/'), { names: 'Verisign', registrarWarning: '' });
+  assert.deepEqual(witnessesOf('https://rdap.identitydigital.services/rdap/'), {
+    names: 'Identity Digital and Cloudflare',
+    registrarWarning: 'Identity Digital also owns a registrar.',
+  });
+  assert.equal(witnessesOf('https://rdap.other.test/').names, 'rdap.other.test');
+  assert.deepEqual(witnessesOf('https://rdap.nic.tv/', new Set(['rdap.nic.tv'])), {
+    names: 'GoDaddy',
+    registrarWarning: 'GoDaddy also owns a registrar.',
+  });
+});
+
+test('malformed registry dates do not throw', () => {
+  for (const events of ['x', [null], [{ eventAction: 'registration', eventDate: 5 }]]) {
+    assert.equal(eventDate({ events }, 'registration'), null);
+  }
+  const events = [{ eventAction: 'registration', eventDate: '2001-01-13T00:00:00Z' }];
+  assert.equal(eventDate({ events }, 'registration'), '2001-01-13');
 });

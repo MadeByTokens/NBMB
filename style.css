@@ -127,7 +127,7 @@ main { padding-top: 2.5rem; padding-bottom: 4rem; }
 .seen { color: var(--muted); }
 
 .row[data-state="registered"] .state { color: var(--registered); }
-.row[data-state="not-registered"] .state { color: var(--free); }
+.row[data-state="no-record"] .state { color: var(--free); }
 .row[data-state="unknown"] .state,
 .row[data-state="invalid"] .state { color: var(--unknown); }
 
@@ -137,7 +137,8 @@ dl { margin: 0; }
 dt { font-weight: 700; margin-top: 0.9rem; }
 dd { margin: 0; color: var(--muted); }
 
-.ledger > p { margin: 1.5rem 0 0; font-size: 1rem; color: var(--muted); }
+.ledger > h2 { margin-top: 2.5rem; }
+.ledger > p { margin: 0.75rem 0 0; color: var(--muted); }
 
 @media (max-width: 30rem) {
   .envelope { padding: 1.5rem 0.75rem; }
