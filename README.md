@@ -87,6 +87,7 @@ can confirm that a name can be bought, and at what price.
 | `app.js` | Network requests and rendering |
 | `lib.js` | Pure logic: parsing, server choice, classification |
 | `lib.test.js` | Tests for `lib.js` |
+| `favicon.svg`, `apple-touch-icon.png` | The googly eyes icon |
 | `fonts/` | Bricolage Grotesque, served from this repo, with its licence |
 | `data.js` | Generated snapshot of the IANA RDAP list |
 | `tools/update_bootstrap.py` | Regenerates `data.js` and the CSP |

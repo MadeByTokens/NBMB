@@ -57,7 +57,7 @@ def main():
     hosts.add("dns.google")  # the opt-in DNS check; see lib.js
     connect = " ".join(f"https://{h}" for h in sorted(hosts))
     policy = (
-        "default-src 'none'; script-src 'self'; style-src 'self'; img-src data:; font-src 'self'; "
+        "default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self' data:; font-src 'self'; "
         f"base-uri 'none'; form-action 'none'; connect-src {connect}"
     )
     block = (
