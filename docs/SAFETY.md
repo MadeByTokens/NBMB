@@ -20,6 +20,7 @@ given an unmodified page and a browser without hostile extensions.
 |---|---|---|
 | Registry | Name, IP address, site origin, time | Unavoidable. Google's terms say it may retain query details |
 | Cloudflare, for some registries | Same as the registry | Terminates TLS for 5 of 377 hosts, covering 509 of 1,203 listed TLDs |
+| Google, only if you press Check through Google DNS | Name, IP address, time | Passes the name to the TLD's servers without your IP address |
 | Internet provider | Which registry host you contacted | Not the name. The host often reveals the TLD |
 | Site host | That the page loaded | Could see names only by serving altered code |
 | Browser extensions | Everything on the page | Use a private window with extensions off |
@@ -29,6 +30,32 @@ Cloudflare-fronted hosts found by DNS: `rdap.identitydigital.services`,
 `rdap.publicinterestregistry.org`, `rdap.gmoregistry.net`, `rdap.cctld.au` and
 `rdap.nic.gov`. This covers `.org`, `.ai`, `.io` and `.me`. Detection used DNS
 names and known Cloudflare IP ranges, so it can miss other CDNs and hosts.
+
+## The Google DNS check
+
+Some endings cannot be reached from a browser, so the page offers a DNS check
+for any Unknown result. It changes who can see a name, so it runs only when you
+press its button.
+
+| Check | Resolver | Your network | TLD servers |
+|---|---|---|---|
+| Registry lookup (RDAP) | None | Sees only the registry host | Registry sees name and IP address |
+| Check through Google DNS | Sees name and IP address | Sees only `dns.google` | See the name, usually not your IP address |
+
+- TLD servers generally do not offer encrypted DNS, so encryption needs a
+  resolver in the middle. Google's request to the TLD's servers is not encrypted.
+- Google sold its registrar business to Squarespace in 2023, so it no longer
+  sells domains directly, but it still runs a registry for endings such as
+  `.app` and `.dev`.
+- Google keeps your IP address and query for 24 to 48 hours. It also keeps a
+  permanent sample of queries, which includes the domain but not your IP address.
+  We cannot verify either statement.
+- Google normally passes part of your IP address to the servers it asks. The
+  page asks it not to. We cannot verify that it complies.
+- The page sends a random test name first. If that name appears to exist, as it
+  does for `.ws`, the real name is not sent.
+- The name is sent in a GET URL, because Google refuses the browser pre-check
+  for POST. It is encrypted in transit and stays out of browser history.
 
 ## Registry and registrar ties
 
@@ -116,20 +143,24 @@ page free of bulk features. Do not republish lookup results.
 ## What was already sound
 
 - Registry data is rendered only with `textContent`.
-- The CSP allows only the page's own scripts and listed registry hosts.
+- The CSP allows only the page's own scripts and font, listed registry hosts and `dns.google`.
 - Spellcheck and autocomplete are off, and the field has no form `name`.
 - Fetches send no cookies or referrer, and bypass the HTTP cache.
-- Names never appear in URLs, storage or history.
+- Names never appear in the page's own URL, storage or history.
 
 ## Remaining risks
 
-- A meta CSP cannot prevent framing. Hosts that can set headers should send
-  `Content-Security-Policy` with `frame-ancestors 'none'`.
-- A compromised host could serve altered code. Running locally avoids this.
+- GitHub Pages cannot send `frame-ancestors`, so `app.js` refuses to run inside
+  a frame instead. This is weaker than a header, but the page has no logins or
+  actions worth hijacking. Hosts that can set headers should send it as well.
+- GitHub can see each page load and the visitor's IP address, as any host can.
+  Registries see the `github.io` origin, not a visitor's identity.
+- A compromised host or repository could serve altered code. Running locally
+  from a reviewed commit avoids this. `.nojekyll` makes Pages serve files
+  unprocessed.
 - The Cloudflare and registrar notes are hand-measured and can go stale.
 - Browser vendors' own telemetry and extensions are outside the page's control,
   and were not audited.
-- The page has no licence yet, so others have no right to reuse it.
 
 ## Sources
 
@@ -138,6 +169,8 @@ page free of bulk features. Do not republish lookup results.
 - [The Register on the 2008 investigation](https://www.theregister.com/2008/02/21/front_running_investigation)
 - [ICANN Registry Operator Code of Conduct](https://newgtldprogram.icann.org/en/node/1231)
 - [Verisign RDAP terms](https://www.verisign.com/domain-names/registration-data-access-protocol/terms-service/index.xhtml)
+- [Google Public DNS privacy](https://developers.google.com/speed/public-dns/privacy)
+- [Squarespace purchase of Google Domains registrations](https://domains.google.com)
 - [Identity Digital RDDS policy](https://www.identity.digital/policies/rdds-access-policy)
 - [Identity Digital on Wikipedia](https://en.wikipedia.org/wiki/Identity_Digital)
 - [CentralNic Registry](https://centralnicregistry.com/about)

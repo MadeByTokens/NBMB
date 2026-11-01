@@ -114,7 +114,11 @@ export function witnessesOf(serverUrl, godaddyHosts = new Set()) {
   const host = new URL(serverUrl).hostname;
   const operator = OPERATORS[host] ?? (godaddyHosts.has(host) ? GODADDY : { name: host });
   const names = operator.via ? `${operator.name} and ${operator.via}` : operator.name;
-  return { names, registrarWarning: operator.registrar ? `${operator.name} also owns a registrar.` : '' };
+  return {
+    names,
+    registrarWarning: operator.registrar ? `${operator.name} also owns a registrar.` : '',
+    parties: [...(operator.via ? [{ name: operator.via }] : []), { name: operator.name }],
+  };
 }
 
 // True only for a well-formed record of this exact domain.
@@ -122,6 +126,32 @@ export function isRecordOf(body, name) {
   return body?.objectClassName === 'domain'
     && typeof body.ldhName === 'string'
     && body.ldhName.toLowerCase().replace(/\.$/, '') === name;
+}
+
+// Optional fallback. The subnet setting stops Google passing part of the user's
+// IP address to the servers it asks.
+export const dnsUrl = (name) => `https://dns.google/resolve?name=${encodeURIComponent(name)}&type=NS&edns_client_subnet=0.0.0.0/0`;
+
+// Who sees a DNS check. The TLD's servers get the name but not the IP address.
+export const dnsParties = (tld) => [{ name: 'Google Public DNS' }, { name: `.${tld} servers`, nameOnly: true }];
+
+// A name that should not exist, so the real one is not sent to endings that
+// answer for every name.
+export function randomTestName(tld) {
+  const hex = Array.from(crypto.getRandomValues(new Uint8Array(8)), (b) => b.toString(16).padStart(2, '0'));
+  return `nbmb-${hex.join('')}.${tld}`;
+}
+
+const sameName = (value, name) => typeof value === 'string' && value.toLowerCase().replace(/\.$/, '') === name;
+
+// DNS sees nameservers, not registrations, so "no-delegation" is weaker than
+// the registry's "no-record".
+export function classifyDns({ status, body, name }) {
+  if (status !== 200 || !Array.isArray(body?.Question) || !sameName(body.Question[0]?.name, name)) return 'unknown';
+  if (body.Status === 3) return 'no-delegation';
+  const answers = Array.isArray(body.Answer) ? body.Answer : [];
+  if (body.Status === 0 && answers.some((a) => a?.type === 2 && sameName(a.name, name))) return 'registered';
+  return 'unknown';
 }
 
 // Decides what a response shows. A 404 means only "no record found": reserved

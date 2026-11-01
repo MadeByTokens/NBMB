@@ -1,7 +1,8 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import {
-  buildServerMap, canaryFor, classify, domainUrl, eventDate, normalizeName, parseNames, statusText, witnessesOf,
+  buildServerMap, canaryFor, classify, classifyDns, dnsParties, dnsUrl, domainUrl, eventDate, normalizeName, parseNames,
+  randomTestName, statusText, witnessesOf,
 } from './lib.js';
 
 const record = (ldhName) => ({ objectClassName: 'domain', ldhName });
@@ -67,16 +68,43 @@ test('canaries', () => {
 });
 
 test('witnesses include network providers and registrar ties', () => {
-  assert.deepEqual(witnessesOf('https://rdap.verisign.com/com/v1/'), { names: 'Verisign', registrarWarning: '' });
+  assert.deepEqual(witnessesOf('https://rdap.verisign.com/com/v1/'), {
+    names: 'Verisign', registrarWarning: '', parties: [{ name: 'Verisign' }],
+  });
   assert.deepEqual(witnessesOf('https://rdap.identitydigital.services/rdap/'), {
     names: 'Identity Digital and Cloudflare',
     registrarWarning: 'Identity Digital also owns a registrar.',
+    parties: [{ name: 'Cloudflare' }, { name: 'Identity Digital' }],
   });
   assert.equal(witnessesOf('https://rdap.other.test/').names, 'rdap.other.test');
   assert.deepEqual(witnessesOf('https://rdap.nic.tv/', new Set(['rdap.nic.tv'])), {
     names: 'GoDaddy',
     registrarWarning: 'GoDaddy also owns a registrar.',
+    parties: [{ name: 'GoDaddy' }],
   });
+});
+
+test('DNS answers are classified strictly', () => {
+  const question = [{ name: 'A.de.', type: 2 }];
+  const ask = (body, status = 200) => classifyDns({ status, body, name: 'a.de' });
+  assert.equal(ask({ Status: 3, Question: question }), 'no-delegation');
+  assert.equal(ask({ Status: 0, Question: question, Answer: [{ name: 'a.de.', type: 2 }] }), 'registered');
+  assert.equal(ask({ Status: 0, Question: question, Answer: [{ name: 'b.de.', type: 2 }] }), 'unknown');
+  assert.equal(ask({ Status: 0, Question: question }), 'unknown');
+  assert.equal(ask({ Status: 2, Question: question }), 'unknown');
+  assert.equal(ask({ Status: 3, Question: [{ name: 'b.de.' }] }), 'unknown');
+  assert.equal(ask({ Status: 3, Question: question }, 500), 'unknown');
+  assert.equal(ask(null), 'unknown');
+});
+
+test('DNS requests withhold the client subnet and use random test names', () => {
+  assert.ok(dnsUrl('a.de').includes('edns_client_subnet=0.0.0.0/0'));
+  assert.match(randomTestName('de'), /^nbmb-[0-9a-f]{16}\.de$/);
+  assert.notEqual(randomTestName('de'), randomTestName('de'));
+});
+
+test('DNS parties show the TLD servers do not get the IP address', () => {
+  assert.deepEqual(dnsParties('de'), [{ name: 'Google Public DNS' }, { name: '.de servers', nameOnly: true }]);
 });
 
 test('malformed registry dates do not throw', () => {
