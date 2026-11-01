@@ -8,14 +8,15 @@
 <!-- csp:end -->
 <meta name="referrer" content="no-referrer">
 <meta name="google" content="notranslate">
-<title>Sealed domain check</title>
+<title>Not Behind My Back</title>
 <link rel="stylesheet" href="style.css">
 <script type="module" src="app.js"></script>
 </head>
 <body>
 <header>
-  <h1>Check a domain without using a registrar’s search</h1>
-  <p>Your browser asks the registry that runs each domain ending. This page has no server code. Each result shows who saw that lookup, because no check is invisible.</p>
+  <h1>Not Behind My Back</h1>
+  <p class="tagline">Check domain ideas with as few watchers as possible.</p>
+  <p>Some people worry that a name they search for could be spotted, bought first and resold to them at a profit. This page is built to reduce that risk, and it shows you exactly what it does so you can judge for yourself.</p>
 </header>
 
 <section class="envelope">
@@ -38,23 +39,49 @@
   <ul id="results" aria-live="polite"></ul>
 
   <section class="ledger">
-    <h2>Who sees your search</h2>
+    <h2>What happens when you press Check domains</h2>
+    <ol>
+      <li>Your browser runs this page’s code. There is no server of ours to send your ideas to.</li>
+      <li>It finds the registry for the domain ending, using a list published by IANA that is stored in this page.</li>
+      <li>It looks up a name known to be registered. This tests the registry without revealing your idea. If the test fails, your name is not sent.</li>
+      <li>It sends your name straight to the registry over an encrypted connection.</li>
+      <li>It shows the answer and who saw it, then forgets it. Nothing is saved.</li>
+    </ol>
+    <p>Open “Show what was sent” under a result to see each request. The option does not appear when nothing was sent. You can compare the list with your browser’s network tab, and read this page’s source.</p>
+
+    <h2>What we did to protect your ideas</h2>
+    <dl>
+      <dt>Skipped registrar search boxes</dt>
+      <dd>Registrar search pages and free lookup sites can log what you type. Here, you do not use them. Some registries do share an owner with a registrar, as explained below.</dd>
+      <dt>Skipped DNS checks</dt>
+      <dd>A DNS check can pass through several outside systems, and a registered name can have no DNS entry. Asking the registry directly involves fewer parties.</dd>
+      <dt>Removed our own access</dt>
+      <dd>This page has no backend, analytics or outside scripts. Its security policy lets it connect only to the listed registries, so it cannot quietly send your ideas elsewhere.</dd>
+      <dt>Blocked browser leaks</dt>
+      <dd>Spellcheck, autocomplete, page translation and caching are turned off here, and your searches stay out of your browser history.</dd>
+    </dl>
+
+    <h2>Who can still see your search</h2>
     <dl>
       <dt>The registry</dt>
       <dd>Sees the name, your IP address and which website you used. This cannot be avoided, because the registry holds the answer. A VPN hides your IP address.</dd>
       <dt>Network providers</dt>
       <dd>Some registries route lookups through a provider such as Cloudflare, which can read them. Results name the ones we know about, but the list may be incomplete.</dd>
+      <dt>Companies that own a registry and a registrar</dt>
+      <dd>Identity Digital, CentralNic and GoDaddy run registries and also have registrar businesses. We found no evidence that they misuse lookups, but we cannot see inside them. Results name them so you can decide.</dd>
       <dt>Your internet provider</dt>
       <dd>Sees which registry you contacted, but not the name.</dd>
-      <dt>Registrars</dt>
-      <dd>See nothing until you search or buy with one, so do that once, when you are ready to pay. The exception is a registry that shares an owner with a registrar, as Identity Digital, CentralNic and GoDaddy do. We cannot tell how they use lookups.</dd>
       <dt>This website’s host</dt>
       <dd>Sees that you loaded the page, but not your search, as long as it serves this code unchanged. To avoid trusting the host, run the page on your own computer.</dd>
       <dt>Your browser extensions</dt>
       <dd>May see everything on this page. Use a private window with extensions turned off.</dd>
     </dl>
-    <h2>Before you buy</h2>
-    <p>A name with no record can still be reserved, cost more than usual, or infringe a trademark. Check the price at your registrar and search trademark records.</p>
+    <p>This reduces the risk, but it cannot remove it. We cannot promise that nobody will ever see your search.</p>
+
+    <h2>When you find a name you like</h2>
+    <p>Buy it soon. This page cannot protect you from delay, and a name is only safe once it is yours.</p>
+    <p>“No record found” is a good sign, not proof. Search at a registrar only when you are ready to pay, and only at the one you plan to use. It shows the real price and whether the name can be bought.</p>
+    <p>A name with no record can still infringe a trademark, so search trademark records first.</p>
     <p>This page is for a person checking a few names. Registries limit lookups, ban bulk automated use, and may block your IP address if you run many.</p>
     <p>The list of registries is a snapshot from <span id="snapshot"></span>.</p>
   </section>
@@ -66,6 +93,10 @@
     <span class="state"></span>
     <p class="detail"></p>
     <p class="seen"></p>
+    <details class="trail" hidden>
+      <summary>Show what was sent</summary>
+      <ol></ol>
+    </details>
   </li>
 </template>
 </body>

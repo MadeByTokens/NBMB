@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import {
-  buildServerMap, canaryFor, classify, domainUrl, eventDate, normalizeName, parseNames, witnessesOf,
+  buildServerMap, canaryFor, classify, domainUrl, eventDate, normalizeName, parseNames, statusText, witnessesOf,
 } from './lib.js';
 
 const record = (ldhName) => ({ objectClassName: 'domain', ldhName });
@@ -51,6 +51,14 @@ test('server map applies overrides and fixes trailing slashes', () => {
   assert.equal(map.has('net'), false);
   assert.ok(map.get('io').includes('identitydigital'));
   assert.equal(domainUrl(map.get('com'), 'a.com'), 'https://x.test/v1/domain/a.com');
+});
+
+test('status text covers failures', () => {
+  assert.equal(statusText(200, true), 'record found');
+  assert.equal(statusText(200, false), 'unexpected answer');
+  assert.equal(statusText(404), 'no record');
+  assert.equal(statusText(0), 'no readable answer');
+  assert.equal(statusText(403), 'answered 403');
 });
 
 test('canaries', () => {

@@ -1,18 +1,50 @@
-# Sealed domain check
+# Not Behind My Back (NBMB)
 
-A static page that checks whether domains have a registration record by asking
-each registry directly over RDAP. It keeps your exploratory searches out of
-registrar search boxes. It has no backend, no dependencies and no build step.
+Check domain ideas with as few watchers as possible.
 
-This is a proof of concept. It reduces exposure but does not make a search
-invisible. Read [docs/SAFETY.md](docs/SAFETY.md) before hosting it for others.
+## Why this exists
+
+There is a long-standing worry that a domain you search for could be spotted,
+bought by someone else and resold to you at a profit. Nobody has shown how often
+this happens, but the worry is reasonable, and a search should not hand your
+idea to more parties than it must.
+
+This project is not about hiding a purchase or making you anonymous. It has one
+job: keep your ideas away from as many watchers as possible before you decide,
+and be honest about the ones that remain.
+
+We invite you to check this yourself. The code is short and has no dependencies,
+and each result can show the exact requests your browser sent.
+
+## What we did, and what we could not do
+
+| Step we took | Risk it reduces | What remains |
+|---|---|---|
+| Ask the registry directly | Registrar and lookup sites logging your search | The registry always sees the name |
+| Skip DNS checks | Resolvers and DNS monitors seeing the name | None for this step |
+| No backend, analytics or outside scripts | This site collecting your ideas | A hosted copy could be altered, so run it locally if unsure |
+| Allow connections only to listed registries | The page sending your ideas elsewhere | Browser extensions can bypass this |
+| Turn off spellcheck, translation and caching | Browser features sending or keeping the name | Browser vendors' own telemetry was not audited |
+| Test each registry before sending your name | Sending your idea to a broken server | The test shows the registry that you looked at that ending |
+| Name who saw each lookup | Trusting a party you did not know about | Our list of providers can go out of date |
+
+Some registries sit behind Cloudflare, and some share an owner with a registrar.
+We found no evidence of misuse, and we cannot rule it out. The evidence and
+sources are in [docs/SAFETY.md](docs/SAFETY.md). If you find a mistake or a leak
+we missed, please report it.
+
+The strongest protection is simple: when you find a name you like, buy it soon.
 
 ## Run it
 
     python3 -m http.server 8000
 
 Then open <http://localhost:8000>. Opening `index.html` directly from disk does
-not work, because browsers block ES modules on `file://`. Any static host works.
+not work, because browsers block ES modules on `file://`.
+
+This is a proof of concept. Any static host can serve it, but read
+[docs/SAFETY.md](docs/SAFETY.md) before hosting a public copy. It covers registry
+terms and the framing protection a host should add.
 
 ## How a result is decided
 
@@ -60,6 +92,14 @@ Unknown. The script finds GoDaddy hosts itself, but the other host notes in
   because registry terms ban high-volume automated use.
 - When a server is added, confirm it returns 200 for a registered name.
 
+## Similar projects
+
+If you need bulk checks, prices or a name generator, try
+[Domain Hunter](https://github.com/WhiteBite/Domain-Hunter), an MIT-licensed
+browser app with more features and wider coverage. It makes a different trade:
+it sends promising names to DNS providers to improve accuracy, and keeps a local
+history. This project does less so that fewer parties see each name.
+
 ## Known limits
 
 - `.de` has no CORS header and `.co` has no working RDAP server, so both show
@@ -67,5 +107,7 @@ Unknown. The script finds GoDaddy hosts itself, but the other host notes in
 - GoDaddy's servers (204 TLDs, including `.tv`, `.biz` and `.design`) work, but
   throttle quickly. A throttled IP address sees Unknown until the limit clears.
 - `.io` and `.me` use a server that is not in the IANA list, which could change.
+- `.org` may return 404 for some registered domains, according to Domain
+  Hunter's source. We have not reproduced this.
 - ccTLDs without an explicit test name use `nic.<tld>`. Where that does not
   exist, they show Unknown.

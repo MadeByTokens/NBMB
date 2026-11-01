@@ -5,9 +5,13 @@ relying on them. This is an engineering review, not legal advice.
 
 ## Summary
 
-The page is safe to run for personal use. The main risk to users is overtrust:
-believing a search is invisible, or that "No record found" means a name can be
-bought. No check found a way for names to reach anyone beyond the parties below,
+The goal is narrow: reduce the chance that someone sees a domain idea during a
+search, buys it first and resells it at a profit. Hiding a purchase or making
+users anonymous is out of scope.
+
+The page reduces that risk but cannot remove it, because the registry must see
+the name to answer. The main remaining risk is overtrust, so the page shows who
+saw each lookup and the exact requests sent. No check found a way for names to reach anyone beyond the parties below,
 given an unmodified page and a browser without hostile extensions.
 
 ## Who can see a lookup
@@ -60,6 +64,10 @@ Tested with real names:
 | `example.dev`, `test.dev`, `a.dev`, `www.dev` | Return 404, although names like these may be reserved |
 | `rdap.org` as a source | Returned 404 for `github.io`, `google.de`, `google.co` |
 
+Domain Hunter's source says `.org` can return 404 for a domain that is registered
+and live. We have not reproduced this. Confirming through DNS would expose the
+name to more parties, so this project does not do it.
+
 A false "no record" costs little, because the registrar check shows the truth.
 That is why the label is "No record found", not "Available".
 
@@ -99,10 +107,11 @@ page free of bulk features. Do not republish lookup results.
 | A redirect could reach a server that had not passed the test lookup | Redirects now read as Unknown |
 | One failed test lookup blocked a TLD until reload | Test lookups rerun on each check |
 | A malformed registry date could freeze the page | Dates are validated, and each lookup is isolated |
+| Users could not verify what was sent | Each result lists its exact requests |
 | "Seen by nobody" was untrue after a test lookup | Now "Your name was not sent" |
 | Browser translation could send names to a translation service | Translation is disabled for the page |
 | The update script could leave the CSP and data out of sync | It now fails if the CSP block is missing |
-| Page omitted the trademark, price and rate limit risks | "Before you buy" section added |
+| Page omitted the trademark, price and rate limit risks | "When you find a name you like" section added |
 
 ## What was already sound
 

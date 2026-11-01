@@ -39,6 +39,8 @@ h1 {
 
 header p { margin: 0; max-width: 34em; color: var(--muted); }
 
+header .tagline { margin-bottom: 0.5rem; font-size: 1.375rem; line-height: 1.3; font-weight: 700; color: var(--ink); }
+
 h2 { margin: 0 0 0.5rem; font-size: 1.5rem; line-height: 1.2; }
 
 /* The tint printed inside security envelopes, which hides what is in them. */
@@ -125,6 +127,11 @@ main { padding-top: 2.5rem; padding-bottom: 4rem; }
 .detail, .seen { grid-column: 1 / -1; margin: 0; font-size: 1rem; }
 .detail:empty, .seen:empty { display: none; }
 .seen { color: var(--muted); }
+
+.trail { grid-column: 1 / -1; margin-top: 0.25rem; font-size: 1rem; color: var(--muted); }
+.trail summary { cursor: pointer; width: fit-content; }
+.trail ol { margin: 0.25rem 0 0; padding-left: 1.5rem; }
+.trail li { overflow-wrap: anywhere; }
 
 .row[data-state="registered"] .state { color: var(--registered); }
 .row[data-state="no-record"] .state { color: var(--free); }

@@ -1,7 +1,7 @@
 import { BOOTSTRAP } from './data.js';
 import {
   MAX_NAMES, buildServerMap, canaryFor, classify, domainUrl, eventDate,
-  isRecordOf, parseNames, tldOf, witnessesOf,
+  isRecordOf, parseNames, statusText, tldOf, witnessesOf,
 } from './lib.js';
 
 const TIMEOUT_MS = 10000;
@@ -20,7 +20,7 @@ document.querySelector('#snapshot').textContent = BOOTSTRAP.publication.slice(0,
 
 const servers = buildServerMap(BOOTSTRAP);
 const godaddyHosts = new Set(BOOTSTRAP.godaddyHosts);
-const canaryResults = new Map(); // tld -> Promise<boolean>, cleared on each run
+const canaryResults = new Map(); // tld -> Promise<{ok, url, status}>, cleared on each run
 
 const STATE_TEXT = {
   waiting: 'Waiting',
@@ -46,25 +46,32 @@ async function requestOnce(url) {
   return { status: response.status, body };
 }
 
-// status 0 means the browser got no readable answer: blocked, throttled or down.
+// Returns the last answer plus the status of every attempt, so the page can
+// list each request. Status 0 means no readable answer: blocked or down.
 async function request(url) {
+  const attempts = [];
   for (let attempt = 0; attempt < 2; attempt += 1) {
     if (attempt > 0) await sleep(RETRY_DELAY_MS);
     try {
       const result = await requestOnce(url);
-      if (result.status !== 429) return result;
+      attempts.push(result.status);
+      if (result.status !== 429) return { ...result, attempts };
     } catch {
-      // handled by the retry and the final return
+      attempts.push(0);
     }
   }
-  return { status: 0, body: null };
+  return { status: attempts.at(-1), body: null, attempts };
 }
 
-function serverTrusted(tld, server) {
+function runCanary(tld, server) {
   if (!canaryResults.has(tld)) {
     const canary = canaryFor(tld);
-    canaryResults.set(tld, request(domainUrl(server, canary))
-      .then(({ status, body }) => status === 200 && isRecordOf(body, canary)));
+    const url = domainUrl(server, canary);
+    canaryResults.set(tld, request(url).then(({ status, body, attempts }) => ({
+      ok: status === 200 && isRecordOf(body, canary),
+      url,
+      attempts,
+    })));
   }
   return canaryResults.get(tld);
 }
@@ -81,6 +88,20 @@ function setRow(row, state, detail, seenBy) {
   row.querySelector('.state').textContent = STATE_TEXT[state];
   row.querySelector('.detail').textContent = detail ?? '';
   row.querySelector('.seen').textContent = seenBy ?? '';
+}
+
+function addTrailLine(row, text) {
+  const item = document.createElement('li');
+  item.textContent = text;
+  row.querySelector('.trail ol').append(item);
+  row.querySelector('.trail').hidden = false;
+}
+
+// Lists every request behind a result, so users can verify them.
+function addTrail(row, label, url, attempts, validRecord) {
+  for (const status of attempts) {
+    addTrailLine(row, `${label}: ${url} (${statusText(status, validRecord)})`);
+  }
 }
 
 function registeredDetail(body) {
@@ -105,13 +126,19 @@ async function check(name, row) {
 
   // The test lookup comes first, so your name is not sent to a server
   // whose answer could not be trusted anyway.
-  if (!(await serverTrusted(tld, server))) {
-    setRow(row, 'unknown', `The .${tld} registry did not answer a test lookup. It may be blocking browsers or limiting requests. Try again in a minute.`, NOT_SENT);
+  const reused = canaryResults.has(tld);
+  const canary = await runCanary(tld, server);
+  if (reused) addTrailLine(row, `Test lookup: reused the earlier .${tld} test`);
+  else addTrail(row, 'Test lookup', canary.url, canary.attempts, canary.ok);
+  if (!canary.ok) {
+    setRow(row, 'unknown', `The .${tld} registry failed a test lookup. It may be blocking browsers or limiting requests. Try again in a minute.`, NOT_SENT);
     return;
   }
 
   await sleep(GAP_MS);
-  const { status, body } = await request(domainUrl(server, name));
+  const url = domainUrl(server, name);
+  const { status, body, attempts } = await request(url);
+  addTrail(row, 'Your name', url, attempts, isRecordOf(body, name));
   const state = classify({ status, body, name, serverTrusted: true });
   const seenBy = `Seen by ${names}. ${registrarWarning}`.trim();
 

@@ -98,6 +98,14 @@ export function buildServerMap(bootstrap) {
   return map;
 }
 
+// Plain words for the "what was sent" list under each result.
+export function statusText(status, validRecord = true) {
+  if (status === 200) return validRecord ? 'record found' : 'unexpected answer';
+  if (status === 404) return 'no record';
+  if (status === 0) return 'no readable answer';
+  return `answered ${status}`;
+}
+
 export const domainUrl = (server, name) => `${server}domain/${encodeURIComponent(name)}`;
 export const canaryFor = (tld) => CANARIES[tld] ?? `nic.${tld}`;
 
