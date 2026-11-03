@@ -20,6 +20,7 @@ given an unmodified page and a browser without hostile extensions.
 |---|---|---|
 | Registry | Name, IP address, site origin, time | Unavoidable. Google's terms say it may retain query details |
 | Cloudflare, for some registries | Same as the registry | Terminates TLS for 5 of 377 hosts, covering 509 of 1,203 listed TLDs |
+| Imperva or Amazon CloudFront, for a few registries | Same as the registry | Imperva fronts `.sg`, its two IDN endings, `.brussels` and `.vlaanderen`; CloudFront fronts `.aquarelle` |
 | Google, only if you press Check through Google DNS | Name, IP address, time | Passes the name to the TLD's servers without your IP address |
 | Internet provider | Which registry host you contacted | Not the name. The host often reveals the TLD |
 | Site host | That the page loaded | Could see names only by serving altered code |
@@ -30,6 +31,14 @@ Cloudflare-fronted hosts found by DNS: `rdap.identitydigital.services`,
 `rdap.publicinterestregistry.org`, `rdap.gmoregistry.net`, `rdap.cctld.au` and
 `rdap.nic.gov`. This covers `.org`, `.ai`, `.io` and `.me`. Detection used DNS
 names and known Cloudflare IP ranges, so it can miss other CDNs and hosts.
+
+A second scan on 2026-11-02 looked up the network owner of every host. It found
+Imperva (Incapsula) in front of `rdap.sgnic.sg`, `rdap.ta.sgnic.sg`,
+`rdap.zh.sgnic.sg`, `rdap.nic.brussels` and `rdap.nic.vlaanderen`, and Amazon
+CloudFront in front of `rdap.nic.aquarelle`. The other 232 Amazon-hosted
+servers showed no CloudFront headers, so they look like plain hosting. Imperva
+also sets tracking cookies; the page sends requests without credentials, so the
+browser neither stores nor returns them.
 
 ## The Google DNS check
 

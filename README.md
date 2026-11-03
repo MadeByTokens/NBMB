@@ -28,7 +28,8 @@ and each result can show the exact requests your browser sent.
 | Test each registry before sending your name | Sending your idea to a broken server | The test shows the registry that you looked at that ending |
 | Name who saw each lookup | Trusting a party you did not know about | Our list of providers can go out of date |
 
-Some registries sit behind Cloudflare, and some share an owner with a registrar.
+Some registries sit behind Cloudflare, Imperva or Amazon CloudFront, and some
+share an owner with a registrar.
 We found no evidence of misuse, and we cannot rule it out. The evidence and
 sources are in [docs/SAFETY.md](docs/SAFETY.md). If you find a mistake or a leak
 we missed, please
@@ -61,7 +62,7 @@ test the server with.
 
 | Check | Who can read the name | Encrypted on your network |
 |---|---|---|
-| Registry lookup | The registry, and Cloudflare for some registries | Yes |
+| Registry lookup | The registry, and a CDN such as Cloudflare for some registries | Yes |
 | Check through Google DNS | Google, then the TLD's servers without your IP address | Yes |
 
 DNS answers less than RDAP. A registered name with no nameservers looks the same

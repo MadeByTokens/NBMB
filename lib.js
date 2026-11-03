@@ -35,8 +35,8 @@ const SECOND_LEVEL_SUFFIXES = new Set([
   'co.th', 'or.th', 'ac.th', 'co.kr', 'or.kr', 'ne.kr', 'com.fj', 'ac.fj',
 ]);
 
-// Measured 2026-11-01; see docs/SAFETY.md. `via` can read lookups because it
-// terminates TLS. `registrar` means the same owner also sells domains.
+// Measured 2026-11-01, CDNs other than Cloudflare added 2026-11-02; see
+// docs/SAFETY.md. `via` can read lookups because it terminates TLS. `registrar` means the same owner also sells domains.
 const OPERATORS = {
   'rdap.verisign.com': { name: 'Verisign' },
   'tld-rdap.verisign.com': { name: 'Verisign' },
@@ -50,6 +50,17 @@ const OPERATORS = {
   'rdap.centralnic.com': { name: 'CentralNic', registrar: true },
   'rdap.centralnicregistry.com': { name: 'CentralNic', registrar: true },
   'rdap.registro.br': { name: 'Registro.br' },
+  'rdap.sgnic.sg': { name: 'SGNIC', via: 'Imperva' },
+  'rdap.ta.sgnic.sg': { name: 'SGNIC', via: 'Imperva' },
+  'rdap.zh.sgnic.sg': { name: 'SGNIC', via: 'Imperva' },
+  'rdap.nic.brussels': { name: 'DNS Belgium', via: 'Imperva' },
+  'rdap.nic.vlaanderen': { name: 'DNS Belgium', via: 'Imperva' },
+  'rdap.nic.aquarelle': { name: 'the .aquarelle registry', via: 'Amazon CloudFront' },
+  'rdap.ca.fury.ca': { name: 'CIRA' },
+  'rdap.nic.or.kr': { name: 'KISA' },
+  'rdap.thains.co.th': { name: 'THNIC' },
+  'www.rdap.fj': { name: 'the .fj registry' },
+  'rdap.iana.org': { name: 'IANA' },
 };
 
 const GODADDY = { name: 'GoDaddy', registrar: true };

@@ -84,6 +84,7 @@ test('witnesses include network providers and registrar ties', () => {
     registrarWarning: 'Identity Digital also owns a registrar.',
     parties: [{ name: 'Cloudflare' }, { name: 'Identity Digital' }],
   });
+  assert.equal(witnessesOf('https://rdap.sgnic.sg/rdap/').names, 'SGNIC and Imperva');
   assert.equal(witnessesOf('https://rdap.other.test/').names, 'rdap.other.test');
   assert.deepEqual(witnessesOf('https://rdap.nic.tv/', new Set(['rdap.nic.tv'])), {
     names: 'GoDaddy',
