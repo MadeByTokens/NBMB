@@ -65,6 +65,14 @@ test('status text covers failures', () => {
 test('canaries', () => {
   assert.equal(canaryFor('io'), 'github.io');
   assert.equal(canaryFor('dev'), 'nic.dev');
+  assert.equal(canaryFor('ca'), 'cira.ca'); // nic.ca is not registered
+});
+
+test('third-level names under listed suffixes are accepted', () => {
+  for (const name of ['example.co.th', 'example.co.kr', 'example.com.fj']) {
+    assert.deepEqual(normalizeName(name), { name });
+  }
+  assert.ok(normalizeName('shop.example.co.th').error);
 });
 
 test('witnesses include network providers and registrar ties', () => {

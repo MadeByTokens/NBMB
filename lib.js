@@ -9,19 +9,30 @@ const SERVER_OVERRIDES = {
 };
 
 // A 404 only means something if this server knows registered names. Each TLD
-// gets a canary; nic.<tld> is required for gTLDs, ccTLDs need an explicit one.
+// gets a canary; nic.<tld> is required for gTLDs, ccTLDs need an explicit one
+// when nic.<tld> is not registered. Swept against every TLD 2026-11-02.
 const CANARIES = {
   ai: 'google.ai',
   br: 'registro.br',
+  ca: 'cira.ca',
+  fj: 'usp.ac.fj',
+  int: 'who.int',
   io: 'github.io',
+  kr: 'kisa.kr',
   me: 'about.me',
+  th: 'thnic.co.th',
   uk: 'bbc.co.uk',
+  vg: 'gov.vg',
+  'xn--3e0b707e': 'xn--or3bn7q.xn--3e0b707e', // 정부.한국
+  'xn--o3cw4h': 'xn--42cl2bj2hxbd2g.xn--o3cw4h', // ทีเอชนิค.ไทย
+  'xn--yfro4i67o': 'xn--8pry35awnc453b.xn--yfro4i67o', // 联合早报.新加坡
 };
 
 // Names under these suffixes are registrable at the third level.
 const SECOND_LEVEL_SUFFIXES = new Set([
   'co.uk', 'org.uk', 'me.uk', 'com.br', 'net.br', 'org.br',
   'com.au', 'net.au', 'org.au',
+  'co.th', 'or.th', 'ac.th', 'co.kr', 'or.kr', 'ne.kr', 'com.fj', 'ac.fj',
 ]);
 
 // Measured 2026-11-01; see docs/SAFETY.md. `via` can read lookups because it

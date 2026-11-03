@@ -53,6 +53,12 @@ Some endings, such as `.de` and `.co`, cannot be checked from a browser. For
 these, and for any other Unknown result, the page offers a Check through Google
 DNS button. Nothing goes to Google unless you press it.
 
+A sweep of every ending on 2026-11-02 found more that always show Unknown:
+`.cr` (self-signed certificate), `.na` (authorized clients only), `.ng` (times
+out), `.sn` (rejects RDAP requests and answers with WHOIS text), `.tz` (no CORS
+header), and `.xihuan` and `.சிங்கப்பூர்`, where no registered name was found to
+test the server with.
+
 | Check | Who can read the name | Encrypted on your network |
 |---|---|---|
 | Registry lookup | The registry, and Cloudflare for some registries | Yes |

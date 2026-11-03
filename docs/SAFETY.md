@@ -119,8 +119,11 @@ Registro.br.
 
 Risk to users: repeated use from one IP address can get that address throttled.
 This happened during testing: a sweep of all servers got one IP address blocked
-by GoDaddy for at least 25 minutes, across every GoDaddy TLD. During a block,
-results show Unknown, and the page does not expose the reason.
+by GoDaddy for at least 25 minutes, across every GoDaddy TLD. A second sweep on
+2026-11-02 was cut off after about 100 queries, even with 3 seconds between
+them, and the block was still in place an hour later (slow retests during that
+hour may have extended it). During a block, results show Unknown, and the page
+does not expose the reason.
 Risk to anyone hosting a public copy: review these terms first, and keep the
 page free of bulk features. Do not republish lookup results.
 
@@ -137,6 +140,8 @@ page free of bulk features. Do not republish lookup results.
 | Users could not verify what was sent | Each result lists its exact requests |
 | "Seen by nobody" was untrue after a test lookup | Now "Your name was not sent" |
 | Browser translation could send names to a translation service | Translation is disabled for the page |
+| Nine endings, `.ca` among them, always showed Unknown because `nic.<tld>` is not registered there, so the test lookup failed | Each now has a known registered test name; `.xihuan` and `.சிங்கப்பூர்` still have none |
+| `example.co.th`, `example.co.kr` and `example.com.fj` were rejected as subdomains | Common third-level suffixes for `.th`, `.kr` and `.fj` are accepted |
 | The update script could leave the CSP and data out of sync | It now fails if the CSP block is missing |
 | Page omitted the trademark, price and rate limit risks | "When you find a name you like" section added |
 
